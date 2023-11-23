@@ -1,0 +1,13 @@
+pandas
+numpy
+scipy
+statsmodels
+matplotlib
+plotly
+seaborn
+nbformat
+ipykernel
+black
+requests
+ta
+quant-invest-lab

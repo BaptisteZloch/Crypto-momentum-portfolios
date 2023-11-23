@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using the following DOI.
+title: Crypto Momentum Porfolio
+version: 0.2.1
+authors:
+  - name: Jules Prieux
+    email: jules.prieux@dauphine.eu
+  - name: Ahmed Bachir
+    email: ahmed.bachir@dauphine.eu
+  - name: Baptiste Zloch
+    email: baptiste.zloch@dauphine.eu
+license: MIT
