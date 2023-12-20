@@ -1,8 +1,13 @@
 from __future__ import annotations
 from typing import Final, List, Literal, Optional, Self, Union
 import pandas as pd
-from crypto_momentum_portfolios.constants import DATA_PATH
-from crypto_momentum_portfolios.types import CryptoName
+from crypto_momentum_portfolios.constants import DATA_FREQUENCY_MAPPER, DATA_PATH
+from crypto_momentum_portfolios.indicators import INDICATOR_MAPPING
+from crypto_momentum_portfolios.types import (
+    CryptoName,
+    DataFrequency,
+    FieldList,
+)
 
 
 class CryptoDataLoader:
@@ -31,7 +36,7 @@ class CryptoDataLoader:
         __new__() -> Self: Singleton pattern to get the data loader instance.
     """
 
-    _instance: Optional[CryptoDataLoader] = None
+    _instance: Optional[Self] = None
     __PATH: Final = DATA_PATH
 
     def __init__(self):
@@ -46,11 +51,11 @@ class CryptoDataLoader:
         """
         return self.__wrangle_data(pd.read_csv(self.__PATH))
 
-    def get_crypto(
+    def __select_cryptos(
         self,
         crypto_name: Union[Union[CryptoName, Literal["all"]], List[CryptoName]] = "all",
-    ) -> Union[pd.Series, pd.DataFrame]:
-        """Factory method to get crypto data from the data loader. The method can return a single crypto series or a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
+    ) -> pd.DataFrame:
+        """Extract the wanted cryptos from the data loader. The method can return a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
 
         Args:
         ----
@@ -62,7 +67,7 @@ class CryptoDataLoader:
 
         Returns:
         ----
-            Union[pd.Series, pd.DataFrame]: The crypto series or dataframe of crypto series.
+            pd.DataFrame: The dataframe of the wanted cryptos.
         """
         if crypto_name == "all":
             return self.__data
@@ -75,6 +80,32 @@ class CryptoDataLoader:
                 f"Invalid crypto_name: {crypto_name} must be a string or a list of strings or even 'all'"
             )
 
+    def get_crypto(
+        self,
+        crypto_name: Union[Union[CryptoName, Literal["all"]], List[CryptoName]] = "all",
+        data_frequency: DataFrequency = "daily",
+        fields: list[FieldList] = ["price"],
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Factory method to get crypto data from the data loader. The method can return a single crypto series or a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
+
+        Args:
+        ----
+            crypto_name (Union[Union[CryptoName, Literal[&quot;all&quot;]], List[CryptoName]], optional): Whether you want to get a single crypto history, several cryptos or even the whole cryptos of the universe with `all`. Defaults to "all".
+            data_frequency (DataFrequency, optional): The wanted frequency for the data. It uses `asfreq` function. Defaults to "daily".
+            fields (list[FieldList], optional): The fields to retrieve, the default field that will always be retrvied is price. Defaults to None.
+
+        Returns:
+        ----
+            pd.DataFrame The crypto dataframe with multiindex columns. The first level contains the field (price, returns, ...) and the second the crypto name.
+        """
+        # Extract the wanted cryptos and resample the data to the wanted frequency
+        df = self.__select_cryptos(crypto_name=crypto_name).asfreq(
+            DATA_FREQUENCY_MAPPER.get(data_frequency, "1D")
+        )
+
+        return self.___construct_indicators_dataframe(df, fields=fields, **kwargs)
+
     @property
     def assets(self) -> list[str]:
         """Property to get the list of cryptos available in the data loader.
@@ -83,6 +114,53 @@ class CryptoDataLoader:
             list[str]: The list of cryptos available in the data loader.
         """
         return self.__assets
+
+    @staticmethod
+    def ___construct_indicators_dataframe(
+        crypto_dataframe: pd.DataFrame, fields: list[FieldList] = ["price"], **kwargs
+    ) -> pd.DataFrame:
+        """Handle the indicators to compute on the initial crypto data.
+
+        Args:
+        ----
+            crypto_dataframe (pd.DataFrame): The crypto data.
+            fields (list[FieldList]): The list of indicators to compute.
+
+        Returns:
+        ----
+            pd.DataFrame: The crypto data with the indicators and the multiindex columns.
+        """
+        # Prepare the final dataframe that has a multiindex columns for each field
+        # Make a copy so we are sure not to modify the original dataframe
+        df_final = crypto_dataframe.copy()
+        # Creating the default price column multiindex
+        df_final.columns = pd.MultiIndex.from_product(
+            [["price"], crypto_dataframe.columns]
+        )
+
+        # Handle the indicators to unique fields
+        unique_fields = set(fields)
+        # Remove the default field : price
+        unique_fields.remove("price")
+
+        assert unique_fields.issubset(
+            INDICATOR_MAPPING.keys()
+        ), f"Invalid field name, please use one of the following : {','.join(INDICATOR_MAPPING.keys())},"
+
+        for field in unique_fields:
+            # Compute the wanted indicator in the mapping dict for the given initial crypto_dataframe (w/o multiindex)
+            df_indicator = INDICATOR_MAPPING[field](crypto_dataframe, **kwargs)
+            df_indicator.columns = pd.MultiIndex.from_product(
+                [[field], crypto_dataframe.columns]
+            )  # Create the multiindex columns for this indicator
+            # Merge the indicator dataframe with the final dataframe
+            df_final = pd.merge(
+                df_final,
+                df_indicator,
+                left_index=True,
+                right_index=True,
+            )
+        return df_final
 
     @staticmethod
     def __wrangle_data(raw_dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -101,8 +179,7 @@ class CryptoDataLoader:
         raw_dataframe["date"] = pd.to_datetime(
             raw_dataframe["date"], infer_datetime_format=True
         )
-        raw_dataframe = raw_dataframe.set_index("date")
-        return raw_dataframe.asfreq("1D")
+        return raw_dataframe.set_index("date").asfreq("1D")
 
     def __new__(cls) -> Self:
         """Singleton pattern to get the data loader instance.

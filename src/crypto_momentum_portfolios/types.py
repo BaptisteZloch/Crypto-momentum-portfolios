@@ -21,3 +21,9 @@ CryptoName = Literal[
     "dogecoin",
     "avalanche_2",
 ]
+
+FieldList = Literal[
+    "price", "returns", "momentum", "volatility", "instantaneous_volatility"
+]
+
+DataFrequency = Literal["daily", "weekly", "monthly"]
