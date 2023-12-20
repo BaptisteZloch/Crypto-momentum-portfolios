@@ -95,7 +95,10 @@ class CryptoDataLoader:
             crypto_name (Union[Union[CryptoName, Literal[&quot;all&quot;]], List[CryptoName]], optional): Whether you want to get a single crypto history, several cryptos or even the whole cryptos of the universe with `all`. Defaults to "all".
             data_frequency (DataFrequency, optional): The wanted frequency for the data. It uses `asfreq` function. Defaults to "daily".
             fields (list[FieldList], optional): The fields to retrieve, the default field that will always be retrvied is price. Defaults to None.
-            flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC,momentum... Defaults to False.
+            flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC_momentum... Defaults to False.
+
+
+            **kwargs: The optional arguments to pass to the indicators functions it could be : `momentum_lookback`, `volatility_lookback`
 
         Returns:
         ----
@@ -134,6 +137,8 @@ class CryptoDataLoader:
         ----
             crypto_dataframe (pd.DataFrame): The crypto data.
             fields (list[FieldList]): The list of indicators to compute.
+
+            **kwargs: The optional arguments to pass to the indicators functions it could be : `momentum_lookback`, `volatility_lookback`
 
         Returns:
         ----

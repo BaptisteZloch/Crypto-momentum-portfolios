@@ -16,13 +16,17 @@ class Indicators:
     def momentum(
         crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
     ) -> Union[pd.Series, pd.DataFrame]:
-        return crypto_data.rolling(lookback).apply(lambda x: x[-1] / x[0]).fillna(1)
+        return (
+            crypto_data.rolling(kwargs.get("momentum_lookback", lookback))
+            .apply(lambda x: x[-1] / x[0])
+            .fillna(1)
+        )
 
     @staticmethod
     def volatility(
         crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
     ) -> Union[pd.Series, pd.DataFrame]:
-        return crypto_data.rolling(lookback).std()
+        return crypto_data.rolling(kwargs.get("volatility_lookback", lookback)).std()
 
     @staticmethod
     def instantaneous_volatility(
