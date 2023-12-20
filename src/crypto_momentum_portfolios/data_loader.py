@@ -85,6 +85,7 @@ class CryptoDataLoader:
         crypto_name: Union[Union[CryptoName, Literal["all"]], List[CryptoName]] = "all",
         data_frequency: DataFrequency = "daily",
         fields: list[FieldList] = ["price"],
+        flatten_fields_with_crypto: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
         """Factory method to get crypto data from the data loader. The method can return a single crypto series or a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
@@ -94,17 +95,25 @@ class CryptoDataLoader:
             crypto_name (Union[Union[CryptoName, Literal[&quot;all&quot;]], List[CryptoName]], optional): Whether you want to get a single crypto history, several cryptos or even the whole cryptos of the universe with `all`. Defaults to "all".
             data_frequency (DataFrequency, optional): The wanted frequency for the data. It uses `asfreq` function. Defaults to "daily".
             fields (list[FieldList], optional): The fields to retrieve, the default field that will always be retrvied is price. Defaults to None.
+            flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC,momentum... Defaults to False.
 
         Returns:
         ----
-            pd.DataFrame The crypto dataframe with multiindex columns. The first level contains the field (price, returns, ...) and the second the crypto name.
+            pd.DataFrame The crypto dataframe with multiindex columns if `flatten_fields_with_crypto` is False. The first level contains the field (price, returns, ...) and the second the crypto name.
         """
         # Extract the wanted cryptos and resample the data to the wanted frequency
         df = self.__select_cryptos(crypto_name=crypto_name).asfreq(
             DATA_FREQUENCY_MAPPER.get(data_frequency, "1D")
         )
 
-        return self.___construct_indicators_dataframe(df, fields=fields, **kwargs)
+        result = self.___construct_indicators_dataframe(df, fields=fields, **kwargs)
+        if flatten_fields_with_crypto:
+            result.columns = (
+                result.columns.get_level_values(1)
+                + "_"
+                + result.columns.get_level_values(0)
+            )
+        return result
 
     @property
     def assets(self) -> list[str]:
