@@ -73,7 +73,7 @@ INDICATOR_MAPPING: dict[
         ],
         Union[pd.DataFrame, pd.Series],
     ],
-] = {
+] = {   
     "returns": Indicators.returns,
     "momentum": Indicators.momentum,
     "volatility": Indicators.volatility,
