@@ -2,7 +2,6 @@ from typing import Literal
 
 
 CryptoName = Literal[
-    "date",
     "bitcoin",
     "ethereum",
     "bitcoin_cash",
@@ -20,10 +19,30 @@ CryptoName = Literal[
     "matic_network",
     "dogecoin",
     "avalanche_2",
+    "BTC-USDT",
+    "ETH-USDT",
+    "BCH-USDT",
+    "XRP-USDT",
+    "LTC-USDT",
+    "ETC-USDT",
+    "TRX-USDT",
+    "ADA-USDT",
+    "BNB-USDT",
+    "SOL-USDT",
+    "DASH-USDT",
+    "XTZ-USDT",
+    "LINK-USDT",
+    "XLM-USDT",
+    "MATIC-USDT",
+    "DOGE-USDT",
+    "AVAX-USDT",
 ]
 
 FieldList = Literal[
     "price",
+    "volumne",
+    "amount",
+    "market_cap",
     "returns",
     "momentum",
     "volatility",

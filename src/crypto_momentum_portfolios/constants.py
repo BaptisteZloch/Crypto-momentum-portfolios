@@ -1,10 +1,30 @@
 import platform
 
+CRYPTOS = {
+    "BTC-USDT",
+    "ETH-USDT",
+    "BCH-USDT",
+    "XRP-USDT",
+    "LTC-USDT",
+    "ETC-USDT",
+    "TRX-USDT",
+    "ADA-USDT",
+    "BNB-USDT",
+    "SOL-USDT",
+    "DASH-USDT",
+    "XTZ-USDT",
+    "LINK-USDT",
+    "XLM-USDT",
+    "MATIC-USDT",
+    "DOGE-USDT",
+    "AVAX-USDT",
+}
+
 
 if platform.system() == "Windows":
-    DATA_PATH = "..\\data\\daily_crypto_data.csv"
+    DATA_PATH = "..\\data_from_TOBAM\\daily_crypto_data.csv"
 else:
-    DATA_PATH = "../data/daily_crypto_data.csv"
+    DATA_PATH = "../data_from_TOBAM/daily_crypto_data.csv"
 
 
 DATA_FREQUENCY_MAPPER = {"daily": "1D", "weekly": "1W", "monthly": "1M"}
