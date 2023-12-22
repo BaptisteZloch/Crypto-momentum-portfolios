@@ -23,7 +23,34 @@ CryptoName = Literal[
 ]
 
 FieldList = Literal[
-    "price", "returns", "momentum", "volatility", "instantaneous_volatility"
+    "price",
+    "returns",
+    "momentum",
+    "volatility",
+    "instantaneous_volatility",
+    "long_ma",
+    "short_ma",
+    "long_ema",
+    "short_ema",
 ]
 
-DataFrequency = Literal["daily", "weekly", "monthly"]
+DataFrequency = Literal["daily", "end_week", "monthly"]
+
+RebalanceFrequency = Literal[
+    "daily",
+    "weekly",
+    "monthly",
+    "friday",
+    "thursday",
+    "wednesday",
+    "tuesday",
+    "monday",
+    "sunday",
+    "saturday",
+    "month_end",
+    "month_start",
+    "quarter_end",
+    "quarter_start",
+    "week_start",
+    "week_end",
+]

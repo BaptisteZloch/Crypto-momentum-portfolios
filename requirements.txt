@@ -1,6 +1,7 @@
 pandas
 numpy
 scipy
+tqdm
 statsmodels
 matplotlib
 plotly
