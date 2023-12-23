@@ -67,19 +67,24 @@ class CryptoDataLoaderQIL:
             "_Volume",
             "volume",
         )
-        mkt_cap_df = price_df * amount_df
-        return pd.merge(
+        merged_universe = pd.merge(
             pd.merge(
-                pd.merge(
-                    price_df,
-                    volume_df,
-                    left_index=True,
-                    right_index=True,
-                ),
-                amount_df,
+                price_df,
+                volume_df,
                 left_index=True,
                 right_index=True,
             ),
+            amount_df,
+            left_index=True,
+            right_index=True,
+        )
+
+        mkt_cap_df = merged_universe["price"] * merged_universe["amount"]
+        mkt_cap_df.columns = pd.MultiIndex.from_product(
+            [["market_cap"], mkt_cap_df.columns]
+        )
+        return pd.merge(
+            merged_universe,
             mkt_cap_df,
             left_index=True,
             right_index=True,
@@ -208,7 +213,7 @@ class CryptoDataLoaderQIL:
     @staticmethod
     def __wrangle_data(
         raw_dataframe: pd.DataFrame,
-        to_remove: str,
+        to_remove: Optional[str] = None,
         first_column_level: str = "price",
     ) -> pd.DataFrame:
         """Perform data wrangling on raw dataframe the steps are :
@@ -229,12 +234,17 @@ class CryptoDataLoaderQIL:
         raw_dataframe.index = raw_dataframe.index.map(
             lambda x: x.replace(hour=0, minute=0, second=0, microsecond=0)
         )
-        raw_dataframe.columns = pd.MultiIndex.from_product(
-            [
-                [first_column_level],
-                raw_dataframe.columns.map(lambda x: x.replace(to_remove, "")),
-            ]
-        )
+        if to_remove is not None:
+            raw_dataframe.columns = pd.MultiIndex.from_product(
+                [
+                    [first_column_level],
+                    raw_dataframe.columns.map(lambda x: x.replace(to_remove, "")),
+                ]
+            )
+        else:
+            raw_dataframe.columns = pd.MultiIndex.from_product(
+                [[first_column_level], raw_dataframe.columns]
+            )
 
         return raw_dataframe.asfreq("1D")
 
