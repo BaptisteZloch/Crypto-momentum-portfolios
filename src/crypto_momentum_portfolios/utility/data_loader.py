@@ -4,14 +4,13 @@ import pandas as pd
 from quant_invest_lab.data_provider import build_multi_crypto_dataframe
 from crypto_momentum_portfolios.constants import (
     CRYPTOS,
-    DATA_FREQUENCY_MAPPER,
     DATA_PATH,
 )
-from crypto_momentum_portfolios.indicators import INDICATOR_MAPPING
+from crypto_momentum_portfolios.portfolio_management.indicators import INDICATOR_MAPPING
 from crypto_momentum_portfolios.types import (
     CryptoName,
     DataFrequency,
-    FieldList,
+    Fields,
 )
 
 
@@ -53,17 +52,23 @@ class CryptoDataLoaderQIL:
             pd.DataFrame: The wrangled crypto data.
         """
         price_df = self.__wrangle_data(
-            build_multi_crypto_dataframe(CRYPTOS, "1day", column_to_keep="Close"),
+            build_multi_crypto_dataframe(
+                CRYPTOS, timeframe="1day", column_to_keep="Close"
+            ),
             "_Close",
             "price",
         )
         amount_df = self.__wrangle_data(
-            build_multi_crypto_dataframe(CRYPTOS, "1day", column_to_keep="Amount"),
+            build_multi_crypto_dataframe(
+                CRYPTOS, timeframe="1day", column_to_keep="Amount"
+            ),
             "_Amount",
             "amount",
         )
         volume_df = self.__wrangle_data(
-            build_multi_crypto_dataframe(CRYPTOS, "1day", column_to_keep="Volume"),
+            build_multi_crypto_dataframe(
+                CRYPTOS, timeframe="1day", column_to_keep="Volume"
+            ),
             "_Volume",
             "volume",
         )
@@ -122,8 +127,8 @@ class CryptoDataLoaderQIL:
     def get_crypto(
         self,
         crypto_name: Union[Union[CryptoName, Literal["all"]], List[CryptoName]] = "all",
-        data_frequency: DataFrequency = "daily",
-        fields: list[FieldList] = ["price"],
+        data_frequency: DataFrequency = DataFrequency.DAILY,
+        fields: list[Fields] = [Fields.PRICE],
         flatten_fields_with_crypto: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
@@ -133,7 +138,7 @@ class CryptoDataLoaderQIL:
         ----
             crypto_name (Union[Union[CryptoName, Literal[&quot;all&quot;]], List[CryptoName]], optional): Whether you want to get a single crypto history, several cryptos or even the whole cryptos of the universe with `all`. Defaults to "all".
             data_frequency (DataFrequency, optional): The wanted frequency for the data. It uses `asfreq` function. Defaults to "daily".
-            fields (list[FieldList], optional): The fields to retrieve, the default field that will always be retrieved is price. Defaults to None.
+            fields (list[Fields], optional): The fields to retrieve, the default field that will always be retrieved is price. Defaults to None.
             flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC_momentum... Defaults to False.
 
 
@@ -144,9 +149,7 @@ class CryptoDataLoaderQIL:
             pd.DataFrame The crypto dataframe with multiindex columns if `flatten_fields_with_crypto` is False. The first level contains the field (price, returns, ...) and the second the crypto name.
         """
         # Extract the wanted cryptos and resample the data to the wanted frequency
-        df = self.__select_cryptos(crypto_name=crypto_name).asfreq(
-            DATA_FREQUENCY_MAPPER.get(data_frequency, "1D")
-        )
+        df = self.__select_cryptos(crypto_name=crypto_name).asfreq(data_frequency)
 
         result = self.___construct_indicators_dataframe(df, fields=fields, **kwargs)
         if flatten_fields_with_crypto:
@@ -169,7 +172,7 @@ class CryptoDataLoaderQIL:
     @staticmethod
     def ___construct_indicators_dataframe(
         crypto_dataframe: pd.DataFrame,
-        fields: list[FieldList] = ["price", "market_cap"],
+        fields: list[Fields] = [Fields.PRICE, Fields.MARKET_CAP],
         **kwargs,
     ) -> pd.DataFrame:
         """Handle the indicators to compute on the initial crypto data.
@@ -177,7 +180,7 @@ class CryptoDataLoaderQIL:
         Args:
         ----
             crypto_dataframe (pd.DataFrame): The crypto data.
-            fields (list[FieldList]): The list of indicators to compute.
+            fields (list[Fields]): The list of indicators to compute.
 
             **kwargs: The optional arguments to pass to the indicators functions it could be : `momentum_lookback`, `volatility_lookback`
 
@@ -333,8 +336,8 @@ class CryptoDataLoader:
     def get_crypto(
         self,
         crypto_name: Union[Union[CryptoName, Literal["all"]], List[CryptoName]] = "all",
-        data_frequency: DataFrequency = "daily",
-        fields: list[FieldList] = ["price"],
+        data_frequency: DataFrequency = DataFrequency.DAILY,
+        fields: list[Fields] = [Fields.PRICE],
         flatten_fields_with_crypto: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
@@ -344,7 +347,7 @@ class CryptoDataLoader:
         ----
             crypto_name (Union[Union[CryptoName, Literal[&quot;all&quot;]], List[CryptoName]], optional): Whether you want to get a single crypto history, several cryptos or even the whole cryptos of the universe with `all`. Defaults to "all".
             data_frequency (DataFrequency, optional): The wanted frequency for the data. It uses `asfreq` function. Defaults to "daily".
-            fields (list[FieldList], optional): The fields to retrieve, the default field that will always be retrieved is price. Defaults to None.
+            fields (list[Fields], optional): The fields to retrieve, the default field that will always be retrieved is price. Defaults to None.
             flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC_momentum... Defaults to False.
 
 
@@ -355,9 +358,7 @@ class CryptoDataLoader:
             pd.DataFrame The crypto dataframe with multiindex columns if `flatten_fields_with_crypto` is False. The first level contains the field (price, returns, ...) and the second the crypto name.
         """
         # Extract the wanted cryptos and resample the data to the wanted frequency
-        df = self.__select_cryptos(crypto_name=crypto_name).asfreq(
-            DATA_FREQUENCY_MAPPER.get(data_frequency, "1D")
-        )
+        df = self.__select_cryptos(crypto_name=crypto_name).asfreq(DataFrequency)
 
         result = self.___construct_indicators_dataframe(df, fields=fields, **kwargs)
         if flatten_fields_with_crypto:
@@ -379,14 +380,14 @@ class CryptoDataLoader:
 
     @staticmethod
     def ___construct_indicators_dataframe(
-        crypto_dataframe: pd.DataFrame, fields: list[FieldList] = ["price"], **kwargs
+        crypto_dataframe: pd.DataFrame, fields: list[Fields] = [Fields.PRICE], **kwargs
     ) -> pd.DataFrame:
         """Handle the indicators to compute on the initial crypto data.
 
         Args:
         ----
             crypto_dataframe (pd.DataFrame): The crypto data.
-            fields (list[FieldList]): The list of indicators to compute.
+            fields (list[Fields]): The list of indicators to compute.
 
             **kwargs: The optional arguments to pass to the indicators functions it could be : `momentum_lookback`, `volatility_lookback`
 
