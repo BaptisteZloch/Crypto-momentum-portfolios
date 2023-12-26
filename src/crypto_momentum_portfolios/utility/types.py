@@ -56,7 +56,7 @@ FieldList = Literal[
 
 class Fields(StrEnum):
     PRICE = "price"
-    VOLUMNE = "volumne"
+    VOLUME = "volume"
     AMOUNT = "amount"
     MARKET_CAP = "market_cap"
     RETURNS = "returns"
@@ -97,3 +97,18 @@ class RebalanceFrequency(StrEnum):
     QUARTER_START = "QS"
     WEEK_START = "1W"
     WEEK_END = "W-FRI"
+
+
+class Benchmark(StrEnum):
+    EQUAL_WEIGHTED = "equal_weighted_benchmark"
+    CAPITALIZATION_WEIGHTED = "capi_weighted_benchmark"
+    BITCOIN = "bitcoin_benchmark"
+
+
+class AllocationMethod(StrEnum):
+    CAPITALIZATION_WEIGHTED = "capitalization_weighted"
+    VOLUME_WEIGHTED = "volume_weighted"
+    EQUAL_WEIGHTED = "equal_weighted"
+    MOMENTUM_WEIGHTED = "momentum_weighted"
+    RISK_PARITY = "risk_parity"
+    MEAN_VARIANCE = "mean_variance"

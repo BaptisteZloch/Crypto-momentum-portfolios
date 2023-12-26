@@ -18,6 +18,10 @@ CRYPTOS = {
     "MATIC-USDT",
     "DOGE-USDT",
     "AVAX-USDT",
+    "ATOM-USDT",
+    "KDA-USDT",
+    "VET-USDT",
+    "EOS-USDT",
 }
 
 

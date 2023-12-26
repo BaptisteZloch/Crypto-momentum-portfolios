@@ -1,17 +1,37 @@
 from __future__ import annotations
-from typing import Final, List, Literal, Optional, Self, Union
+from typing import Callable, Final, List, Literal, Optional, Self, Union, Dict
 import pandas as pd
 from quant_invest_lab.data_provider import build_multi_crypto_dataframe
-from crypto_momentum_portfolios.constants import (
+from crypto_momentum_portfolios.portfolio_management.indicators import Indicators
+from crypto_momentum_portfolios.utility.constants import (
     CRYPTOS,
     DATA_PATH,
 )
-from crypto_momentum_portfolios.portfolio_management.indicators import INDICATOR_MAPPING
-from crypto_momentum_portfolios.types import (
+
+from crypto_momentum_portfolios.utility.types import (
     CryptoName,
     DataFrequency,
     Fields,
 )
+
+INDICATOR_MAPPING: Dict[
+    str,
+    Callable[
+        [
+            Union[pd.DataFrame, pd.Series],
+        ],
+        Union[pd.DataFrame, pd.Series],
+    ],
+] = {
+    "returns": Indicators.returns,
+    "momentum": Indicators.momentum,
+    "volatility": Indicators.volatility,
+    "instantaneous_volatility": Indicators.instantaneous_volatility,
+    "long_ema": Indicators.long_ema,
+    "short_ema": Indicators.short_ema,
+    "short_ma": Indicators.short_ma,
+    "long_ma": Indicators.long_ma,
+}
 
 
 class CryptoDataLoaderQIL:

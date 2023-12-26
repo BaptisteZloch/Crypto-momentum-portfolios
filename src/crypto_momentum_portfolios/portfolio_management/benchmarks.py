@@ -5,17 +5,13 @@ import numpy as np
 from typing import Optional, Self, Tuple
 
 from tqdm import tqdm
-from crypto_momentum_portfolios.portfolio_management.allocation import (
-    capi_weighted_allocation,
-    equal_weighted_allocation,
-)
+from crypto_momentum_portfolios.portfolio_management.allocation import Allocation
 from crypto_momentum_portfolios.utility.constants import (
     SLIPPAGE_EFFECT,
     TRANSACTION_COST,
 )
 from crypto_momentum_portfolios.utility.types import Fields, Side, RebalanceFrequency
-from crypto_momentum_portfolios.utility.utils import get_rebalance_dates
-from crypto_momentum_portfolios.utility.types import Fields, Side, RebalanceFrequency
+from crypto_momentum_portfolios.utility.utils import get_rebalance_dates, weights_drift
 
 
 class BenchmarkDataFrameBuilderABC(ABC):
@@ -72,15 +68,25 @@ class BenchmarkDataFrameBuilderABC(ABC):
             total=len(universe),
             leave=False,
         ):
-            if index in REBALANCE_DATES or index == universe.index[0]:
+            if index in REBALANCE_DATES and REBALANCE_DATES.index(index) == 0:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}")
-                weights = capi_weighted_allocation(
-                    SECURITIES, row[capitalization_field]
+                weights = Allocation.capitalization_weighted_allocation(
+                    SECURITIES,
+                    universe[capitalization_field][SECURITIES].loc[:index],
+                )
+            elif index in REBALANCE_DATES and REBALANCE_DATES.index(index) > 0:
+                if verbose:
+                    print(f"Rebalancing the portfolio on {index}")
+                weights = Allocation.capitalization_weighted_allocation(
+                    SECURITIES,
+                    universe[capitalization_field][SECURITIES].loc[
+                        REBALANCE_DATES[REBALANCE_DATES.index(index) - 1] : index
+                    ],
                 )
 
             weights_histo.append(weights)
-            returns = universe.loc[index, "returns"][SECURITIES].to_numpy()
+            returns = row["returns"][SECURITIES].to_numpy()
 
             weights_np = np.array(list(weights.values()))
             if index in REBALANCE_DATES or index == universe.index[0]:
@@ -94,14 +100,7 @@ class BenchmarkDataFrameBuilderABC(ABC):
                 )
             else:
                 returns_histo.append((returns @ weights_np) * side)
-            new_weights = {
-                security: unit_weight
-                for security, unit_weight in zip(
-                    SECURITIES,
-                    (weights_np * (returns + 1)) / ((returns + 1) @ weights_np),
-                )
-            }
-            weights = new_weights
+            weights = weights_drift(SECURITIES, weights_np, returns)
 
         return pd.DataFrame(
             returns_histo,
@@ -154,12 +153,12 @@ class BenchmarkDataFrameBuilderABC(ABC):
             if index in REBALANCE_DATES or index == universe.index[0]:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}")
-                weights = equal_weighted_allocation(
+                weights = Allocation.equal_weighted_allocation(
                     SECURITIES,
                 )
 
             weights_histo.append(weights)
-            returns = universe.loc[index, "returns"][SECURITIES].to_numpy()
+            returns = row["returns"][SECURITIES].to_numpy()
 
             weights_np = np.array(list(weights.values()))
             if index in REBALANCE_DATES or index == universe.index[0]:
@@ -173,14 +172,7 @@ class BenchmarkDataFrameBuilderABC(ABC):
                 )
             else:
                 returns_histo.append((returns @ weights_np) * side)
-            new_weights = {
-                security: unit_weight
-                for security, unit_weight in zip(
-                    SECURITIES,
-                    (weights_np * (returns + 1)) / ((returns + 1) @ weights_np),
-                )
-            }
-            weights = new_weights
+            weights = weights_drift(SECURITIES, weights_np, returns)
 
         return pd.DataFrame(
             returns_histo,
@@ -205,7 +197,7 @@ class BenchmarkDataFrameBuilder(BenchmarkDataFrameBuilderABC):
         capitalization_field: Fields = Fields.MARKET_CAP,
         rebalance_frequency: RebalanceFrequency = RebalanceFrequency.MONTH_START,
         side: Side = Side.LONG,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> Self:
         returns_df, _ = self._build_capitalization_weighted_benchmark(
             self.__universe, capitalization_field, rebalance_frequency, side, verbose
@@ -225,7 +217,7 @@ class BenchmarkDataFrameBuilder(BenchmarkDataFrameBuilderABC):
         self,
         rebalance_frequency: RebalanceFrequency = RebalanceFrequency.MONTH_START,
         side: Side = Side.LONG,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> Self:
         returns_df, _ = self._build_equally_weighted_benchmark(
             self.__universe, rebalance_frequency, side, verbose

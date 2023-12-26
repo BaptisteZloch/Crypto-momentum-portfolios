@@ -65,24 +65,7 @@ class Indicators:
         return cls._instance
 
 
-INDICATOR_MAPPING: dict[
-    str,
-    Callable[
-        [
-            Union[pd.DataFrame, pd.Series],
-        ],
-        Union[pd.DataFrame, pd.Series],
-    ],
-] = {   
-    "returns": Indicators.returns,
-    "momentum": Indicators.momentum,
-    "volatility": Indicators.volatility,
-    "instantaneous_volatility": Indicators.instantaneous_volatility,
-    "long_ema": Indicators.long_ema,
-    "short_ema": Indicators.short_ema,
-    "short_ma": Indicators.short_ma,
-    "long_ma": Indicators.long_ma,
-}
+
 
 
 # class Indicators:
