@@ -33,3 +33,18 @@ else:
 
 TRANSACTION_COST = 0.001  # Binance taker spot fees
 SLIPPAGE_EFFECT = 0.0005  # 0.05% slippage effect
+
+
+PERCENT_METRICS = [
+    "Expected return",
+    "CAGR",
+    "Expected volatility",
+    "VaR",
+    "CVaR",
+    "Max drawdown",
+    "Kelly criterion",
+    "Expectancy",
+    "Specific risk",
+    "Systematic risk",
+    "Tracking error",
+]

@@ -15,6 +15,9 @@ from crypto_momentum_portfolios.portfolio_management.allocation import (
 from crypto_momentum_portfolios.portfolio_management.benchmarks import (
     BenchmarkDataFrameBuilder,
 )
+from crypto_momentum_portfolios.portfolio_management.performance import (
+    print_performance_statistics,
+)
 from crypto_momentum_portfolios.portfolio_management.selection import (
     rank_by_field_for_rows,
 )
@@ -61,6 +64,7 @@ class PortfolioBacktester:
     def run_strategy(
         self,
         selection_method: str = "momentum",
+        select_top_k_assets: int = 5,
         allocation_method: AllocationMethod = AllocationMethod.EQUAL_WEIGHTED,
         rebalance_frequency: RebalanceFrequency = RebalanceFrequency.MONTHLY,
         side: Side = Side.LONG,
@@ -68,11 +72,13 @@ class PortfolioBacktester:
         verbose: bool = False,
         print_stats: bool = True,
         plot_curve: bool = True,
+        perform_t_stats: bool = True,
     ):
         """Run the strategy on the universe of assets.
 
         Args:
             selection_method (str, optional): The selection method used to rank the securities in the portfolio. Defaults to "momentum".
+            select_top_k_assets (int, optional): The number of assets to select in the portfolio. Defaults to 5.
             allocation_method (AllocationMethod, optional): The allocation method used to allocate the weights on the selected securities. Defaults to AllocationMethod.EQUAL_WEIGHTED.
             rebalance_frequency (RebalanceFrequency, optional): The rebalance period for the portfolio. Defaults to RebalanceFrequency.MONTHLY.
             side (Side, optional): The long or short side. Defaults to Side.LONG.
@@ -84,6 +90,10 @@ class PortfolioBacktester:
         Returns:
             tuple[Series[float], DataFrame]: A tuple containing a pandas series of the returns of a dataframe of the weights of the portfolio.
         """
+        assert (
+            select_top_k_assets <= self.__universe["returns"].shape[1]
+        ), f"select_top_k_assets must be less than or equal to {self.__universe['returns'].shape[1]}"
+
         returns_histo, weights_histo = [], []
         REBALANCE_DATES = get_rebalance_dates(
             start_date=self.__universe.index[0],
@@ -91,19 +101,19 @@ class PortfolioBacktester:
             frequency=rebalance_frequency,
         )
 
-        TOP_K = 5
-
         for index, row in tqdm(
             self.__universe.iterrows(),
             desc="Backtesting the strategy...",
-            total=len(self.__universe),
+            total=self.__universe.shape[0],
             leave=False,
         ):
             if index in REBALANCE_DATES and REBALANCE_DATES.index(index) == 0:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}...")
                 # Rank the securities in the portfolio and select the top k performing ones
-                securities = rank_by_field_for_rows(row, "momentum")[:TOP_K]
+                securities = rank_by_field_for_rows(row, "momentum")[
+                    :select_top_k_assets
+                ]
                 # Run allocation method on the securities
                 weights = ALLOCATION_TO_FUNCTION[allocation_method](
                     securities,
@@ -117,7 +127,9 @@ class PortfolioBacktester:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}...")
                 # Rank the securities in the portfolio and select the top k performing ones
-                securities = rank_by_field_for_rows(row, "momentum")[:TOP_K]
+                securities = rank_by_field_for_rows(row, "momentum")[
+                    :select_top_k_assets
+                ]
                 # Run allocation method on the securities
                 weights = ALLOCATION_TO_FUNCTION[allocation_method](
                     securities,
@@ -140,7 +152,7 @@ class PortfolioBacktester:
                 returns_histo.append(
                     (
                         (returns @ weights_np)
-                        - TRANSACTION_COST * TOP_K
+                        - TRANSACTION_COST * select_top_k_assets
                         - SLIPPAGE_EFFECT
                     )
                     * side
@@ -157,10 +169,18 @@ class PortfolioBacktester:
         ).fillna(0)
 
         if print_stats:
-            print_portfolio_strategy_report(
-                portfolio_returns=returns,
-                benchmark_returns=self.__benchmarks[benchmark],
-                timeframe="1day",
+            # print_portfolio_strategy_report(
+            #     portfolio_returns=returns,
+            #     benchmark_returns=self.__benchmarks[benchmark],
+            #     timeframe="1day",
+            # )
+            print_performance_statistics(
+                returns,
+                self.__benchmarks[benchmark],
+                perform_t_stats=perform_t_stats,
+                n_samples=1000,
+                sample_size=250,
+                alpha_risk=0.05,
             )
         if plot_curve:
             alloc = pd.DataFrame(weights_df.mean())

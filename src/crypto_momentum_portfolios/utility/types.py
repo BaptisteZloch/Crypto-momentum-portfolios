@@ -68,16 +68,40 @@ class Fields(StrEnum):
     LONG_EMA = "long_ema"
     SHORT_EMA = "short_ema"
 
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
+
 
 class DataFrequency(StrEnum):
     DAILY = "1D"
     WEEKLY = "1W"
     MONTHLY = "1M"
 
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
+
 
 class Side(IntEnum):
     LONG = 1
     SHORT = -1
+
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
 
 
 class RebalanceFrequency(StrEnum):
@@ -98,11 +122,27 @@ class RebalanceFrequency(StrEnum):
     WEEK_START = "1W"
     WEEK_END = "W-FRI"
 
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
+
 
 class Benchmark(StrEnum):
     EQUAL_WEIGHTED = "equal_weighted_benchmark"
     CAPITALIZATION_WEIGHTED = "capi_weighted_benchmark"
     BITCOIN = "bitcoin_benchmark"
+
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
 
 
 class AllocationMethod(StrEnum):
@@ -112,3 +152,48 @@ class AllocationMethod(StrEnum):
     MOMENTUM_WEIGHTED = "momentum_weighted"
     RISK_PARITY = "risk_parity"
     MEAN_VARIANCE = "mean_variance"
+
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
+
+
+class Metrics(StrEnum):
+    EXPECTED_RETURN = "Expected return"
+    CAGR = "CAGR"
+    EXPECTED_VOLATILITY = "Expected volatility"
+    SKEWNESS = "Skewness"
+    KURTOSIS = "Kurtosis"
+    VAR = "VaR"
+    CVAR = "CVaR"
+    MAX_DRAWDOWN = "Max drawdown"
+    KELLY_CRITERION = "Kelly criterion"
+    PROFIT_FACTOR = "Profit factor"
+    PAYOFF_RATIO = "Payoff ratio"
+    EXPECTANCY = "Expectancy"
+    SHARPE_RATIO = "Sharpe ratio"
+    SORTINO_RATIO = "Sortino ratio"
+    BURKE_RATIO = "Burke ratio"
+    CALMAR_RATIO = "Calmar ratio"
+    TAIL_RATIO = "Tail ratio"
+    SPECIFIC_RISK = "Specific risk"
+    SYSTEMATIC_RISK = "Systematic risk"
+    PORTFOLIO_BETA = "Portfolio beta"
+    PORTFOLIO_ALPHA = "Portfolio alpha"
+    JENSEN_ALPHA = "Jensen alpha"
+    R2 = "R2"
+    TRACKING_ERROR = "Tracking error"
+    TREYNOR_RATIO = ("Treynor ratio",)
+    INFORMATION_RATIO = "Information ratio"
+
+    @classmethod
+    def list_values(cls):
+        return list(map(lambda c: c.value, cls))
+
+    @classmethod
+    def list_names(cls):
+        return list(map(lambda c: c.name, cls))
