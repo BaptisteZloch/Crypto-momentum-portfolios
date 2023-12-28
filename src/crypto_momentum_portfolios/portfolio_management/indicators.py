@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Callable, Optional, Self, Union
+import numpy as np
 import pandas as pd
 
 
@@ -40,11 +41,37 @@ class Indicators:
     def momentum(
         crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
     ) -> Union[pd.Series, pd.DataFrame]:
+        return crypto_data.rolling(kwargs.get("momentum_lookback", lookback)).apply(
+            lambda x: (x[-1] / x[0]) - 1
+        )
+
+    @staticmethod
+    def ema_momentum(
+        crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
+    ) -> Union[pd.Series, pd.DataFrame]:
+        return crypto_data - Indicators.long_ema(crypto_data, lookback, **kwargs)
+
+    @staticmethod
+    def ts_momentum(
+        crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 12, **kwargs
+    ) -> Union[pd.Series, pd.DataFrame]:
+        returns = Indicators.returns(crypto_data, **kwargs)
         return (
-            crypto_data.rolling(kwargs.get("momentum_lookback", lookback)).apply(
-                lambda x: x[-1] / x[0]
+            Indicators.volatility(crypto_data, lookback, **kwargs).apply(
+                lambda vol: 0.4 / vol
             )
-            # .fillna(1)
+            * returns.shift(kwargs.get("ts_momentum_lookback", lookback)).apply(np.sign)
+            * returns
+        )
+
+    @staticmethod
+    def volatility_neutralized_momentum(
+        crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
+    ) -> Union[pd.Series, pd.DataFrame]:
+        return Indicators.momentum(
+            crypto_data, kwargs.get("momentum_lookback", lookback), **kwargs
+        ) / Indicators.volatility(
+            crypto_data, kwargs.get("volatility_lookback", lookback), **kwargs
         )
 
     @staticmethod
@@ -52,6 +79,17 @@ class Indicators:
         crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
     ) -> Union[pd.Series, pd.DataFrame]:
         return crypto_data.rolling(kwargs.get("volatility_lookback", lookback)).std()
+
+    # @staticmethod
+    # def ex_ante_volatility(
+    #     crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
+    # ) -> Union[pd.Series, pd.DataFrame]:
+    #     ema_returns = Indicators.long_ema(
+    #         Indicators.returns(crypto_data, **kwargs), lookback, **kwargs
+    #     )
+    #     delta = -1 * 60 / 59
+    #     n = 365
+    #     return crypto_data.rolling(kwargs.get("volatility_lookback", lookback)).std()
 
     @staticmethod
     def instantaneous_volatility(
@@ -63,9 +101,6 @@ class Indicators:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-
-
-
 
 
 # class Indicators:

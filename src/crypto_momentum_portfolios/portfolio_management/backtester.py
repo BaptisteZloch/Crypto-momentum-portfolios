@@ -1,10 +1,8 @@
-from ast import Tuple
 from typing import Optional, Self
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from quant_invest_lab.reports import (
-    print_portfolio_strategy_report,
     plot_from_trade_df_and_ptf_optimization,
 )
 from crypto_momentum_portfolios.portfolio_management.allocation import (
@@ -26,10 +24,13 @@ from crypto_momentum_portfolios.utility.constants import (
     TRANSACTION_COST,
 )
 from crypto_momentum_portfolios.utility.types import (
+    AllocationMode,
     Benchmark,
     Fields,
+    RankingMethod,
     RebalanceFrequency,
     Side,
+    RankingMode,
 )
 from crypto_momentum_portfolios.utility.utils import get_rebalance_dates, weights_drift
 
@@ -37,13 +38,20 @@ from crypto_momentum_portfolios.utility.utils import get_rebalance_dates, weight
 class PortfolioBacktester:
     _instance: Optional[Self] = None
 
-    def __init__(self, universe: pd.DataFrame) -> None:
+    def __init__(
+        self, universe: pd.DataFrame, benchmarks: Optional[pd.DataFrame] = None
+    ) -> None:
         """Constructor method.
 
         Args:
             universe (pd.DataFrame): The universe of assets to backtest the strategy on with the fields.
+            benchmarks (Optional[pd.DataFrame], optional): An optional dataFrame containing the 3 benchmarks ['equal_weighted_benchmark','capi_weighted_benchmark','bitcoin_benchmark']. Defaults to None.
         """
         self.__universe = universe
+        if benchmarks is not None and set(Benchmark.list_values()).issubset(
+            benchmarks.columns
+        ):
+            self.__benchmarks = benchmarks
         self.__benchmarks = (
             BenchmarkDataFrameBuilder(self.__universe)
             .build_equally_weighted_benchmark(
@@ -63,9 +71,14 @@ class PortfolioBacktester:
 
     def run_strategy(
         self,
-        selection_method: str = "momentum",
+        # Selection section
+        ranking_method: RankingMethod = RankingMethod.EMA_MOMENTUM,
+        ranking_mode: RankingMode = RankingMode.DESCENDING,
         select_top_k_assets: int = 5,
+        # Allocation section
         allocation_method: AllocationMethod = AllocationMethod.EQUAL_WEIGHTED,
+        allocation_mode: AllocationMode = AllocationMode.CLASSIC,
+        # Others
         rebalance_frequency: RebalanceFrequency = RebalanceFrequency.MONTHLY,
         side: Side = Side.LONG,
         benchmark: Benchmark = Benchmark.EQUAL_WEIGHTED,
@@ -73,13 +86,17 @@ class PortfolioBacktester:
         print_stats: bool = True,
         plot_curve: bool = True,
         perform_t_stats: bool = True,
+        **kwargs,
     ):
         """Run the strategy on the universe of assets.
 
         Args:
-            selection_method (str, optional): The selection method used to rank the securities in the portfolio. Defaults to "momentum".
-            select_top_k_assets (int, optional): The number of assets to select in the portfolio. Defaults to 5.
+        -----
+            ranking_method (RankingMethod, optional): The selection method used to rank the securities in the portfolio. Defaults to RankingMethod.MOMENTUM.
+            ranking_mode (RankingMode, optional): The ranking way ascending or descending order. Defaults to RankingMode.DESCENDING.
+            select_top_k_assets (int, optional): The number of assets to select in the portfolio based on the ranking selection. Defaults to 5.
             allocation_method (AllocationMethod, optional): The allocation method used to allocate the weights on the selected securities. Defaults to AllocationMethod.EQUAL_WEIGHTED.
+            allocation_mode (AllocationMode, optional): The allocation way classic or inverse, eg : If you allocate by volatility you better want to allocate a lower weight to the most volatile then you will use AllocationMode.INVERSE. Defaults to AllocationMode.CLASSIC.
             rebalance_frequency (RebalanceFrequency, optional): The rebalance period for the portfolio. Defaults to RebalanceFrequency.MONTHLY.
             side (Side, optional): The long or short side. Defaults to Side.LONG.
             benchmark (Benchmark, optional): The benchmark to be used for the performance statistics. Defaults to Benchmark.EQUAL_WEIGHTED.
@@ -88,6 +105,7 @@ class PortfolioBacktester:
             plot_curve (bool, optional): Plot the performance curves. Defaults to True.
 
         Returns:
+        -----
             tuple[Series[float], DataFrame]: A tuple containing a pandas series of the returns of a dataframe of the weights of the portfolio.
         """
         assert (
@@ -111,9 +129,9 @@ class PortfolioBacktester:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}...")
                 # Rank the securities in the portfolio and select the top k performing ones
-                securities = rank_by_field_for_rows(row, "momentum")[
-                    :select_top_k_assets
-                ]
+                securities = rank_by_field_for_rows(
+                    row=row, field=ranking_method, ascending=bool(ranking_mode)
+                )[:select_top_k_assets]
                 # Run allocation method on the securities
                 weights = ALLOCATION_TO_FUNCTION[allocation_method](
                     securities,
@@ -122,14 +140,15 @@ class PortfolioBacktester:
                     ].loc[
                         :index
                     ],  # type: ignore
+                    bool(allocation_mode),
                 )
             elif index in REBALANCE_DATES and REBALANCE_DATES.index(index) > 0:
                 if verbose:
                     print(f"Rebalancing the portfolio on {index}...")
                 # Rank the securities in the portfolio and select the top k performing ones
-                securities = rank_by_field_for_rows(row, "momentum")[
-                    :select_top_k_assets
-                ]
+                securities = rank_by_field_for_rows(
+                    row=row, field=ranking_method, ascending=bool(ranking_mode)
+                )[:select_top_k_assets]
                 # Run allocation method on the securities
                 weights = ALLOCATION_TO_FUNCTION[allocation_method](
                     securities,
@@ -178,8 +197,8 @@ class PortfolioBacktester:
                 returns,
                 self.__benchmarks[benchmark],
                 perform_t_stats=perform_t_stats,
-                n_samples=1000,
-                sample_size=250,
+                n_samples=kwargs.get("n_bootstrap_samples", 1000),
+                sample_size=returns.shape[0] // 6,
                 alpha_risk=0.05,
             )
         if plot_curve:

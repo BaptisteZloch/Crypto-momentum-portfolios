@@ -36,22 +36,19 @@ CryptoName = Literal[
     "MATIC-USDT",
     "DOGE-USDT",
     "AVAX-USDT",
+    # "BOBA-USDT",
+    # "VET-USDT",
 ]
 
-FieldList = Literal[
-    "price",
-    "volumne",
-    "amount",
-    "market_cap",
-    "returns",
-    "momentum",
-    "volatility",
-    "instantaneous_volatility",
-    "long_ma",
-    "short_ma",
-    "long_ema",
-    "short_ema",
-]
+
+class RankingMode(IntEnum):
+    ASCENDING = 1
+    DESCENDING = 0
+
+
+class AllocationMode(IntEnum):
+    CLASSIC = 0
+    INVERSE = 1
 
 
 class Fields(StrEnum):
@@ -61,6 +58,9 @@ class Fields(StrEnum):
     MARKET_CAP = "market_cap"
     RETURNS = "returns"
     MOMENTUM = "momentum"
+    EMA_MOMENTUM = "ema_momentum"
+    TS_MOMENTUM = "ts_momentum"
+    VOLATILITY_NEUTRALIZED_MOMENTUM = "volatility_neutralized_momentum"
     VOLATILITY = "volatility"
     INSTANTANEOUS_VOLATILITYV = "instantaneous_volatility"
     LONG_MA = "long_ma"
@@ -75,6 +75,9 @@ class Fields(StrEnum):
     @classmethod
     def list_names(cls):
         return list(map(lambda c: c.name, cls))
+
+
+RankingMethod = Fields
 
 
 class DataFrequency(StrEnum):
@@ -146,6 +149,7 @@ class Benchmark(StrEnum):
 
 
 class AllocationMethod(StrEnum):
+    VOLATILITY_WEIGHTED = "volatility_weighted"
     CAPITALIZATION_WEIGHTED = "capitalization_weighted"
     VOLUME_WEIGHTED = "volume_weighted"
     EQUAL_WEIGHTED = "equal_weighted"

@@ -15,12 +15,15 @@ class Allocation:
     def capitalization_weighted_allocation(
         selected_assets: List[str],
         selected_assets_capitalization: pd.DataFrame,
+        reversed_allocation: bool = False,
         *arg,
         **kwargs
     ) -> Dict[str, float]:
         selected_assets_capi = (
-            selected_assets_capitalization[selected_assets].iloc[-1].to_list()
+            selected_assets_capitalization[selected_assets].iloc[-1].to_numpy()
         )
+        if reversed_allocation:
+            selected_assets_capi = 1 / selected_assets_capi
         return {
             asset: selected_assets_capi[i] / sum(selected_assets_capi)
             for i, asset in enumerate(selected_assets)
@@ -28,25 +31,48 @@ class Allocation:
 
     @staticmethod
     def volume_weighted_allocation(
-        selected_assets: List[str], selected_assets_volume: pd.DataFrame, *arg, **kwargs
+        selected_assets: List[str],
+        selected_assets_volume: pd.DataFrame,
+        reversed_allocation: bool = False,
+        *arg,
+        **kwargs
     ) -> Dict[str, float]:
-        volume = selected_assets_volume[selected_assets].iloc[-1].to_list()
+        volume = selected_assets_volume[selected_assets].iloc[-1].to_numpy()
+        if reversed_allocation:
+            volume = 1 / volume
         return {
             asset: volume[i] / sum(volume) for i, asset in enumerate(selected_assets)
         }
+
+    @staticmethod
+    def volatility_weighted_allocation(
+        selected_assets: List[str],
+        selected_assets_volatility: pd.DataFrame,
+        reversed_allocation: bool = False,
+        *arg,
+        **kwargs
+    ) -> Dict[str, float]:
+        vol = selected_assets_volatility[selected_assets].iloc[-1].to_numpy()
+        if reversed_allocation:
+            vol = 1 / vol
+        return {asset: vol[i] / sum(vol) for i, asset in enumerate(selected_assets)}
+
+    @staticmethod
+    def momentum_weighted_allocation(
+        selected_assets: List[str],
+        selected_assets_mom: pd.DataFrame,
+        reversed_allocation: bool = False,
+    ) -> Dict[str, float]:
+        mom = selected_assets_mom[selected_assets].iloc[-1].to_numpy()
+        if reversed_allocation:
+            mom = 1 / mom
+        return {asset: mom[i] / sum(mom) for i, asset in enumerate(selected_assets)}
 
     @staticmethod
     def equal_weighted_allocation(
         selected_assets: List[str], *arg, **kwargs
     ) -> Dict[str, float]:
         return {asset: 1 / len(selected_assets) for asset in selected_assets}
-
-    @staticmethod
-    def momentum_weighted_allocation(
-        selected_assets: List[str], selected_assets_mom: pd.DataFrame
-    ) -> Dict[str, float]:
-        mom = selected_assets_mom[selected_assets].iloc[-1].to_list()
-        return {asset: mom[i] / sum(mom) for i, asset in enumerate(selected_assets)}
 
     @staticmethod
     def risk_parity_allocation(
@@ -155,8 +181,9 @@ class Allocation:
 
 
 ALLOCATION_TO_FUNCTION: Dict[
-    AllocationMethod, Callable[[List[str], pd.DataFrame], Dict[str, float]]
+    AllocationMethod, Callable[[List[str], pd.DataFrame, bool], Dict[str, float]]
 ] = {
+    AllocationMethod.VOLATILITY_WEIGHTED: Allocation.volatility_weighted_allocation,
     AllocationMethod.CAPITALIZATION_WEIGHTED: Allocation.capitalization_weighted_allocation,
     AllocationMethod.VOLUME_WEIGHTED: Allocation.volume_weighted_allocation,
     AllocationMethod.EQUAL_WEIGHTED: Allocation.equal_weighted_allocation,
@@ -166,6 +193,7 @@ ALLOCATION_TO_FUNCTION: Dict[
 }
 
 ALLOCATION_FIELDS: Dict[AllocationMethod, Fields] = {
+    AllocationMethod.VOLATILITY_WEIGHTED: Fields.VOLATILITY,
     AllocationMethod.CAPITALIZATION_WEIGHTED: Fields.MARKET_CAP,
     AllocationMethod.VOLUME_WEIGHTED: Fields.VOLUME,
     AllocationMethod.EQUAL_WEIGHTED: Fields.RETURNS,

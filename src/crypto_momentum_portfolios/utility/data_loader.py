@@ -25,6 +25,9 @@ INDICATOR_MAPPING: Dict[
 ] = {
     "returns": Indicators.returns,
     "momentum": Indicators.momentum,
+    "ema_momentum": Indicators.ema_momentum,
+    "ts_momentum": Indicators.ts_momentum,
+    "volatility_neutralized_momentum": Indicators.volatility_neutralized_momentum,
     "volatility": Indicators.volatility,
     "instantaneous_volatility": Indicators.instantaneous_volatility,
     "long_ema": Indicators.long_ema,

@@ -22,6 +22,8 @@ CRYPTOS = {
     "KDA-USDT",
     "VET-USDT",
     "EOS-USDT",
+    # "BOBA-USDT",
+    # "DERC-USDT",
 }
 
 
