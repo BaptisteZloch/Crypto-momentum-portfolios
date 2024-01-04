@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Callable, Final, List, Literal, Optional, Self, Union, Dict
 import pandas as pd
-from quant_invest_lab.data_provider import build_multi_crypto_dataframe
+from quant_invest_lab.data_provider import CryptoService, build_multi_crypto_dataframe
 from crypto_momentum_portfolios.portfolio_management.indicators import Indicators
 from crypto_momentum_portfolios.utility.constants import (
     CRYPTOS,
@@ -74,6 +74,7 @@ class CryptoDataLoaderQIL:
         Returns:
             pd.DataFrame: The wrangled crypto data.
         """
+        CryptoService().refresh_list_of_symbols()
         price_df = self.__wrangle_data(
             build_multi_crypto_dataframe(
                 CRYPTOS, timeframe="1day", column_to_keep="Close"
