@@ -49,7 +49,7 @@ class Indicators:
     def ema_momentum(
         crypto_data: Union[pd.Series, pd.DataFrame], lookback: int = 24, **kwargs
     ) -> Union[pd.Series, pd.DataFrame]:
-        return crypto_data - Indicators.long_ema(crypto_data, lookback, **kwargs)
+        return crypto_data/Indicators.long_ema(crypto_data, lookback, **kwargs)
 
     @staticmethod
     def ts_momentum(
