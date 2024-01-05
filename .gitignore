@@ -1,6 +1,12 @@
 # Custom
 .vscode
 */data
+# LATEX
+*.out
+
+*.fls
+*.fdb_*
+*.gz
 
 #official python gitignore
 # Byte-compiled / optimized / DLL files

@@ -12,3 +12,4 @@ black
 requests
 ta
 quant-invest-lab
+latex
