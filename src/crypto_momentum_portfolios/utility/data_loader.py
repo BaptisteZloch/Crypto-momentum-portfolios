@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Final, List, Literal, Optional, Self, Union, Dict
+from typing import Callable, Final, List, Literal, Optional, Self, Union, Dict, Unpack
 import pandas as pd
 from quant_invest_lab.data_provider import CryptoService, build_multi_crypto_dataframe
 from crypto_momentum_portfolios.portfolio_management.indicators import Indicators
@@ -12,6 +12,7 @@ from crypto_momentum_portfolios.utility.types import (
     CryptoName,
     DataFrequency,
     Fields,
+    GetCryptoKwargs,
 )
 
 INDICATOR_MAPPING: Dict[
@@ -77,9 +78,9 @@ class CryptoDataLoaderQIL:
         CryptoService().refresh_list_of_symbols()
         price_df = self.__wrangle_data(
             build_multi_crypto_dataframe(
-                CRYPTOS, timeframe="1day", column_to_keep="Close"
+                CRYPTOS, timeframe="1day", column_to_keep="Close" # Close
             ),
-            "_Close",
+            "_Close", # _Close
             "price",
         )
         amount_df = self.__wrangle_data(
@@ -154,7 +155,7 @@ class CryptoDataLoaderQIL:
         data_frequency: DataFrequency = DataFrequency.DAILY,
         fields: list[Fields] = [Fields.PRICE],
         flatten_fields_with_crypto: bool = False,
-        **kwargs,
+        **kwargs: GetCryptoKwargs,
     ) -> pd.DataFrame:
         """Factory method to get crypto data from the data loader. The method can return a single crypto series or a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
 
@@ -197,7 +198,7 @@ class CryptoDataLoaderQIL:
     def ___construct_indicators_dataframe(
         crypto_dataframe: pd.DataFrame,
         fields: list[Fields] = [Fields.PRICE, Fields.MARKET_CAP],
-        **kwargs,
+        **kwargs: GetCryptoKwargs,
     ) -> pd.DataFrame:
         """Handle the indicators to compute on the initial crypto data.
 
@@ -363,7 +364,7 @@ class CryptoDataLoader:
         data_frequency: DataFrequency = DataFrequency.DAILY,
         fields: list[Fields] = [Fields.PRICE],
         flatten_fields_with_crypto: bool = False,
-        **kwargs,
+        **kwargs: GetCryptoKwargs,
     ) -> pd.DataFrame:
         """Factory method to get crypto data from the data loader. The method can return a single crypto series or a dataframe of multiple crypto series. You can use the `all` keyword to get all the crypto series. To check the crypto available use the `assets` property.
 
@@ -375,7 +376,7 @@ class CryptoDataLoader:
             flatten_fields_with_crypto (bool, optional): Whether to flatten the crypto's names and the fields. If this field is true the result has not a MultiIndex. e.g.: BTC_price, BTC_momentum... Defaults to False.
 
 
-            **kwargs: The optional arguments to pass to the indicators functions it could be : `momentum_lookback`, `volatility_lookback`, `long_ma_lookback`, `short_ma_lookback`, `long_ema_lookback`, `short_ema_lookback`
+            **kwargs: The optional arguments to pass to the indicators functions it could be : long_ema_lookback, short_ema_lookback, short_ma_lookback, long_ma_lookback, momentum_lookback, ts_momentum_lookback, ema_momentum_lookback, volatility_lookback,
 
         Returns:
         ----
@@ -430,7 +431,7 @@ class CryptoDataLoader:
         # Handle the indicators to unique fields
         unique_fields = set(fields)
         # Remove the default field : price
-        unique_fields.remove("price")
+        unique_fields.remove(Fields.PRICE)
 
         assert unique_fields.issubset(
             INDICATOR_MAPPING.keys()

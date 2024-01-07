@@ -1,4 +1,5 @@
-from typing import Literal
+from dataclasses import field
+from typing import Literal, TypedDict, Unpack
 from enum import IntEnum, StrEnum
 
 CryptoName = Literal[
@@ -39,6 +40,29 @@ CryptoName = Literal[
     # "BOBA-USDT",
     # "VET-USDT",
 ]
+
+
+class RunStrategyKwargs(TypedDict):
+    transaction_cost: float  # Transaction cost
+    slippage_effect: float  # Slippage effect
+    n_bootstrap_samples: int  # Number of bootstrap samples
+    sample_size: int  # Size of each bootstrap sample
+    alpha_risk: float  # p-value bound for risk metrics
+
+
+class GetCryptoKwargs(TypedDict):
+    long_ema_lookback: int
+    short_ema_lookback: int
+    short_ma_lookback: int
+    long_ma_lookback: int
+    momentum_lookback: int
+    ts_momentum_lookback: int
+    ema_momentum_lookback: int
+    volatility_lookback: int
+
+    # @classmethod
+    # def create(cls, a: int = 0, b: int = 1) -> A:
+    #     return A(a=a, b=b)
 
 
 class RankingMode(IntEnum):
@@ -109,6 +133,11 @@ class Side(IntEnum):
 
 class RebalanceFrequency(StrEnum):
     DAILY = "1D"
+    EVERY_TWO_DAYS = "2D"
+    EVERY_THREE_DAYS = "3D"
+    EVERY_FOUR_DAYS = "4D"
+    EVERY_FIVE_DAYS = "5D"
+    EVERY_SIX_DAYS = "6D"
     WEEKLY = "1W"
     MONTHLY = "1M"
     FRIDAY = "W-FRI"

@@ -1,4 +1,4 @@
-from typing import Optional, Self
+from typing import Optional, Self, Unpack
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -29,6 +29,7 @@ from crypto_momentum_portfolios.utility.types import (
     Fields,
     RankingMethod,
     RebalanceFrequency,
+    RunStrategyKwargs,
     Side,
     RankingMode,
 )
@@ -52,22 +53,23 @@ class PortfolioBacktester:
             benchmarks.columns
         ):
             self.__benchmarks = benchmarks
-        self.__benchmarks = (
-            BenchmarkDataFrameBuilder(self.__universe)
-            .build_equally_weighted_benchmark(
-                rebalance_frequency=RebalanceFrequency.MONTHLY,
-                side=Side.LONG,
-                verbose=False,
+        else:
+            self.__benchmarks = (
+                BenchmarkDataFrameBuilder(self.__universe)
+                .build_equally_weighted_benchmark(
+                    rebalance_frequency=RebalanceFrequency.MONTHLY,
+                    side=Side.LONG,
+                    verbose=False,
+                )
+                .build_capitalization_weighted_benchmark(
+                    capitalization_field=Fields.MARKET_CAP,
+                    rebalance_frequency=RebalanceFrequency.MONTHLY,
+                    side=Side.LONG,
+                    verbose=False,
+                )
+                .build_bitcoin_benchmark()
+                .collect_benchmark_returns()
             )
-            .build_capitalization_weighted_benchmark(
-                capitalization_field=Fields.MARKET_CAP,
-                rebalance_frequency=RebalanceFrequency.MONTHLY,
-                side=Side.LONG,
-                verbose=False,
-            )
-            .build_bitcoin_benchmark()
-            .collect_benchmark_returns()
-        )
 
     def run_strategy(
         self,
@@ -86,7 +88,7 @@ class PortfolioBacktester:
         print_stats: bool = True,
         plot_curve: bool = True,
         perform_t_stats: bool = True,
-        **kwargs,
+        **kwargs: RunStrategyKwargs,
     ):
         """Run the strategy on the universe of assets.
 
@@ -168,14 +170,20 @@ class PortfolioBacktester:
             weights_np = np.array(list(weights.values()))
 
             if index in REBALANCE_DATES:
+                # transaction x the number of assets in the portfolio x 2 : because we buy and sell the whole portfolio
                 returns_histo.append(
                     (
                         (returns @ weights_np)
-                        - TRANSACTION_COST * select_top_k_assets
-                        - SLIPPAGE_EFFECT
+                        - (
+                            kwargs.get("transaction_cost", TRANSACTION_COST)
+                            * select_top_k_assets 
+                            * 2
+                        )
+                        - kwargs.get("slippage_effect", SLIPPAGE_EFFECT)
                     )
                     * side
                 )
+
             else:
                 returns_histo.append((returns @ weights_np) * side)
 
@@ -188,18 +196,13 @@ class PortfolioBacktester:
         ).fillna(0)
 
         if print_stats:
-            # print_portfolio_strategy_report(
-            #     portfolio_returns=returns,
-            #     benchmark_returns=self.__benchmarks[benchmark],
-            #     timeframe="1day",
-            # )
             print_performance_statistics(
                 returns,
                 self.__benchmarks[benchmark],
                 perform_t_stats=perform_t_stats,
-                n_samples=kwargs.get("n_bootstrap_samples", 1000),
-                sample_size=returns.shape[0] // 6,
-                alpha_risk=0.05,
+                n_samples=kwargs.get("n_bootstrap_samples", 100),
+                sample_size=kwargs.get("sample_size", returns.shape[0] // 6),
+                alpha_risk=kwargs.get("alpha_risk", 0.05),
             )
         if plot_curve:
             alloc = pd.DataFrame(weights_df.mean())

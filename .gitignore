@@ -3,7 +3,8 @@
 */data
 # LATEX
 *.out
-
+*.blg
+*.bbl
 *.fls
 *.fdb_*
 *.gz

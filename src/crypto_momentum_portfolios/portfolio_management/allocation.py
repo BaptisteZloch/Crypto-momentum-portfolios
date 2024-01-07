@@ -126,7 +126,7 @@ class Allocation:
             security: unit_weight
             for security, unit_weight in zip(
                 selected_assets,
-                weights,
+                map(lambda w: w if w >= 0.001 else 0, weights),
             )
         }
 
@@ -175,7 +175,7 @@ class Allocation:
             security: unit_weight
             for security, unit_weight in zip(
                 selected_assets,
-                weights,
+                map(lambda w: w if w >= 0.001 else 0, weights),
             )
         }
 
