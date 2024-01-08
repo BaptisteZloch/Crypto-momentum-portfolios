@@ -5,6 +5,18 @@ from quant_invest_lab.portfolio import construct_report_dataframe
 
 from crypto_momentum_portfolios.utility.constants import PERCENT_METRICS
 
+ARTICLE_METRICS = [
+    "Expected return",
+    "Expected volatility",
+    "VaR",
+    "CVaR",
+    "Sharpe ratio",
+    "Tail ratio",
+    "Portfolio beta",
+    "Tracking error",
+    "Information ratio",
+]
+
 
 def print_performance_statistics(
     strategy_returns: pd.Series,
@@ -33,10 +45,10 @@ def print_performance_statistics(
                         df.loc[sample_index]["strategy"].to_numpy(),
                         index=benchmark_returns.index[:sample_size],
                     ),
-                    # benchmark_returns=pd.Series(
-                    #     df.loc[sample_index]["benchmark"].to_numpy(),
-                    #     index=benchmark_returns.index[:sample_size],
-                    # ),
+                    benchmark_returns=pd.Series(
+                        df.loc[sample_index]["benchmark"].to_numpy(),
+                        index=benchmark_returns.index[:sample_size],
+                    ),
                     timeframe="1day",
                 )["Portfolio"],
                 np.random.choice(
@@ -44,7 +56,10 @@ def print_performance_statistics(
                 ),
             )
         )
-    for metric in final_stats.index:
+
+    bootstrap_strat_returns_stats = bootstrap_strat_returns_stats[ARTICLE_METRICS]
+    final_list_stats = []
+    for metric in ARTICLE_METRICS:
         if perform_t_stats is True:
             if metric in bootstrap_strat_returns_stats.columns:
                 # if metric in bootstrap_strat_returns_stats.columns:
@@ -57,9 +72,21 @@ def print_performance_statistics(
                     print(
                         f"Benchmark: {100*final_stats['Benchmark'][metric]:.2f}% vs Strategy: {100*final_stats['Portfolio'][metric]:.2f}%"
                     )
+                    final_list_stats.append(
+                        {
+                            "metric": metric,
+                            "value": f'{100*final_stats["Portfolio"][metric]:.2f}% ({t_stat:.2f})',
+                        }
+                    )
                 else:
                     print(
                         f"Benchmark: {final_stats['Benchmark'][metric]:.2f} vs Strategy: {final_stats['Portfolio'][metric]:.2f}"
+                    )
+                    final_list_stats.append(
+                        {
+                            "metric": metric,
+                            "value": f'{final_stats["Portfolio"][metric]:.2f} ({t_stat:.2f})',
+                        }
                     )
                 print(f"\nt-stat: {t_stat:.2f}, p-value: {p_value:.2f}")
                 print(
@@ -86,4 +113,4 @@ def print_performance_statistics(
                     f"Benchmark: {final_stats['Benchmark'][metric]:.2f} vs Strategy: {final_stats['Portfolio'][metric]:.2f}"
                 )
 
-    return final_stats
+    return pd.DataFrame(final_list_stats)

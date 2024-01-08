@@ -176,7 +176,7 @@ class PortfolioBacktester:
                         (returns @ weights_np)
                         - (
                             kwargs.get("transaction_cost", TRANSACTION_COST)
-                            * select_top_k_assets 
+                            * select_top_k_assets
                             * 2
                         )
                         - kwargs.get("slippage_effect", SLIPPAGE_EFFECT)
@@ -194,9 +194,9 @@ class PortfolioBacktester:
         weights_df = pd.DataFrame(
             weights_histo, index=self.__universe.index, dtype=float
         ).fillna(0)
-
+        stats_ptf_df = []
         if print_stats:
-            print_performance_statistics(
+            stats_ptf_df = print_performance_statistics(
                 returns,
                 self.__benchmarks[benchmark],
                 perform_t_stats=perform_t_stats,
@@ -215,7 +215,7 @@ class PortfolioBacktester:
                 asset_allocation_dataframe=alloc,
             )
 
-        return returns, weights_df
+        return returns, weights_df, stats_ptf_df
 
     def __new__(cls, *args, **kwargs) -> Self:
         """Singleton pattern implementation.
