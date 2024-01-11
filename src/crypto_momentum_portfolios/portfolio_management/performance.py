@@ -5,6 +5,7 @@ from quant_invest_lab.portfolio import construct_report_dataframe
 
 from crypto_momentum_portfolios.utility.constants import PERCENT_METRICS
 
+# Only the metrics calculated in the article are considered:
 ARTICLE_METRICS = [
     "Expected return",
     "Expected volatility",
