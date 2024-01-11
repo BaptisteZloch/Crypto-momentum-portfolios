@@ -82,7 +82,7 @@ class Allocation:
         **kwargs
     ) -> Dict[str, float]:
         def risk_budget_objective(weights: npt.NDArray[np.float32], arg: List[Any]):
-            v = arg[0]
+            v = arg[0] # Variance
             risk_budget = arg[1]
             # Risk of the portfolio
             sigma_p = np.sqrt(weights @ v @ weights.T)
@@ -91,7 +91,7 @@ class Allocation:
             # Contribution of each asset to the risk of the portfolio
             assets_risk_contribution = (
                 marginal_risk_contribution @ weights.T
-            ) / sigma_p  # * 252
+            ) / sigma_p  
 
             # We calculate the desired contribution of each asset to the risk of the weights distribution
             assets_risk_target = sigma_p * risk_budget
@@ -126,7 +126,7 @@ class Allocation:
             security: unit_weight
             for security, unit_weight in zip(
                 selected_assets,
-                weights,
+                map(lambda w: w if w >= 0.001 else 0, weights),
             )
         }
 
@@ -175,7 +175,7 @@ class Allocation:
             security: unit_weight
             for security, unit_weight in zip(
                 selected_assets,
-                weights,
+                map(lambda w: w if w >= 0.001 else 0, weights),
             )
         }
 

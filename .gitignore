@@ -3,11 +3,13 @@
 */data
 # LATEX
 *.out
-
+*.blg
+*.bbl
 *.fls
 *.fdb_*
 *.gz
-
+# Excel
+*~$*
 #official python gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/

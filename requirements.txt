@@ -13,3 +13,4 @@ requests
 ta
 quant-invest-lab
 latex
+openpyxl
