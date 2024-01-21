@@ -1,3 +1,0 @@
-- Benchmarks : Capitalization/equal weighted/BTC 
-- optimization process : MeanVar/Capitalization/Risk parity/equal weighted/momentum rank divided by volatility
-- Several indicators for momentum
